@@ -1,33 +1,26 @@
 use csv::ReaderBuilder;
 use std::boxed::Box;
 use std::cmp::max;
+use std::default::Default;
 use std::error::Error;
 use std::result::Result;
 use std::string::String;
 use std::vec::Vec;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let mut rdr = ReaderBuilder::new().from_path("customers-100.csv")?;
-    for result in rdr.records() {
-        let record = result?;
-        println!("{:?}", record);
-    }
-    Ok(())
-}
-
-enum CSVEntry {
+pub enum CSVEntry {
     String(String),
-    Int(i32),
-    Float(f32),
+    // Int(i32),
+    // Float(f32),
 }
 
-struct CSVData {
-    data: Vec<Vec<CSVEntry>>,
-    max_rows: usize,
-    max_cols: usize,
+#[derive(Default)]
+pub struct CSVData {
+    pub data: Vec<Vec<CSVEntry>>,
+    pub max_rows: usize,
+    pub max_cols: usize,
 }
 
-fn read_csv(path: &String) -> Result<CSVData, Box<dyn Error>> {
+pub fn read_csv(path: &String) -> Result<CSVData, Box<dyn Error>> {
     let mut rdr = ReaderBuilder::new().from_path(path).unwrap();
     let mut csv_entries: Vec<Vec<CSVEntry>> = Vec::new();
     let mut max_rows = 0;
@@ -54,13 +47,15 @@ fn read_csv(path: &String) -> Result<CSVData, Box<dyn Error>> {
         max_cols,
     })
 }
-
 fn parse_entry(entry: &str) -> CSVEntry {
-    if let Ok(int_value) = entry.parse::<i32>() {
-        CSVEntry::Int(int_value)
-    } else if let Ok(float_value) = entry.parse::<f32>() {
-        CSVEntry::Float(float_value)
-    } else {
-        CSVEntry::String(entry.to_string())
-    }
+    CSVEntry::String(entry.to_string())
 }
+// fn parse_entry(entry: &str) -> CSVEntry {
+//     if let Ok(int_value) = entry.parse::<i32>() {
+//         CSVEntry::Int(int_value)
+//     } else if let Ok(float_value) = entry.parse::<f32>() {
+//         CSVEntry::Float(float_value)
+//     } else {
+//         CSVEntry::String(entry.to_string())
+//     }
+// }
