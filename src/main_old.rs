@@ -1,7 +1,8 @@
 use iced::keyboard;
 use iced::widget::{
-    button, center, checkbox, column, container, horizontal_rule, pick_list, progress_bar, row,
-    scrollable, slider, text, text_input, toggler, vertical_rule, vertical_space,
+    button, center, checkbox, column, container, horizontal_rule, pick_list,
+    progress_bar, row, scrollable, slider, text, text_input, toggler,
+    vertical_rule, vertical_space,
 };
 use iced::{Center, Element, Fill, Subscription, Theme};
 
@@ -10,14 +11,14 @@ pub fn main() -> iced::Result {
         std::env::set_var("WINIT_UNIX_BACKEND", "wayland");
         std::env::set_var("WGPU_BACKEND", "gl");
     }
-    iced::application("rowgazer", State::update, State::view)
-        .subscription(State::subscription)
-        .theme(State::theme)
+    iced::application("Styling - Iced", Styling::update, Styling::view)
+        .subscription(Styling::subscription)
+        .theme(Styling::theme)
         .run()
 }
 
 #[derive(Default)]
-struct State {
+struct Styling {
     theme: Theme,
     input_value: String,
     slider_value: f32,
@@ -37,7 +38,7 @@ enum Message {
     NextTheme,
 }
 
-impl State {
+impl Styling {
     fn update(&mut self, message: Message) {
         match message {
             Message::ThemeChanged(theme) => {
@@ -71,7 +72,8 @@ impl State {
     fn view(&self) -> Element<Message> {
         let choose_theme = column![
             text("Theme:"),
-            pick_list(Theme::ALL, Some(&self.theme), Message::ThemeChanged).width(Fill),
+            pick_list(Theme::ALL, Some(&self.theme), Message::ThemeChanged)
+                .width(Fill),
         ]
         .spacing(10);
 
@@ -90,7 +92,8 @@ impl State {
         let success = styled_button("Success").style(button::success);
         let danger = styled_button("Danger").style(button::danger);
 
-        let slider = || slider(0.0..=100.0, self.slider_value, Message::SliderChanged);
+        let slider =
+            || slider(0.0..=100.0, self.slider_value, Message::SliderChanged);
 
         let progress_bar = || progress_bar(0.0..=100.0, self.slider_value);
 
@@ -102,8 +105,8 @@ impl State {
         .width(Fill)
         .height(100);
 
-        let checkbox =
-            checkbox("Check me!", self.checkbox_value).on_toggle(Message::CheckboxToggled);
+        let checkbox = checkbox("Check me!", self.checkbox_value)
+            .on_toggle(Message::CheckboxToggled);
 
         let toggler = toggler(self.toggler_value)
             .label("Toggle me!")
@@ -111,17 +114,26 @@ impl State {
             .spacing(10);
 
         let card = {
-            container(column![text("Card Example").size(24), slider(), progress_bar(),].spacing(20))
-                .width(Fill)
-                .padding(20)
-                .style(container::bordered_box)
+            container(
+                column![
+                    text("Card Example").size(24),
+                    slider(),
+                    progress_bar(),
+                ]
+                .spacing(20),
+            )
+            .width(Fill)
+            .padding(20)
+            .style(container::bordered_box)
         };
 
         let content = column![
             choose_theme,
             horizontal_rule(38),
             text_input,
-            row![primary, success, danger].spacing(10).align_y(Center),
+            row![primary, success, danger]
+                .spacing(10)
+                .align_y(Center),
             slider(),
             progress_bar(),
             row![
@@ -147,7 +159,8 @@ impl State {
                 keyboard::key::Named::ArrowUp | keyboard::key::Named::ArrowLeft,
             ) => Some(Message::PreviousTheme),
             keyboard::Key::Named(
-                keyboard::key::Named::ArrowDown | keyboard::key::Named::ArrowRight,
+                keyboard::key::Named::ArrowDown
+                | keyboard::key::Named::ArrowRight,
             ) => Some(Message::NextTheme),
             _ => None,
         })
@@ -155,5 +168,44 @@ impl State {
 
     fn theme(&self) -> Theme {
         self.theme.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rayon::prelude::*;
+
+    use iced_test::{Error, simulator};
+
+    #[test]
+    #[ignore]
+    fn it_showcases_every_theme() -> Result<(), Error> {
+        Theme::ALL
+            .par_iter()
+            .cloned()
+            .map(|theme| {
+                let mut styling = Styling::default();
+                styling.update(Message::ThemeChanged(theme));
+
+                let theme = styling.theme();
+
+                let mut ui = simulator(styling.view());
+                let snapshot = ui.snapshot(&theme)?;
+
+                assert!(
+                    snapshot.matches_hash(format!(
+                        "snapshots/{theme}",
+                        theme = theme
+                            .to_string()
+                            .to_ascii_lowercase()
+                            .replace(" ", "_")
+                    ))?,
+                    "snapshots for {theme} should match!"
+                );
+
+                Ok(())
+            })
+            .collect()
     }
 }
