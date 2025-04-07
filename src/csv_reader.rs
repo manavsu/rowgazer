@@ -1,6 +1,5 @@
 use csv::ReaderBuilder;
 use std::boxed::Box;
-use std::cmp::max;
 use std::default::Default;
 use std::error::Error;
 use std::result::Result;
@@ -9,8 +8,8 @@ use std::vec::Vec;
 
 pub enum CSVEntry {
     String(String),
-    // Int(i32),
-    // Float(f32),
+    Int(i32),
+    Float(f32),
 }
 
 #[derive(Default)]
@@ -47,15 +46,13 @@ pub fn read_csv(path: &String) -> Result<CSVData, Box<dyn Error>> {
         max_cols,
     })
 }
+
 fn parse_entry(entry: &str) -> CSVEntry {
-    CSVEntry::String(entry.to_string())
+    if let Ok(int_value) = entry.parse::<i32>() {
+        CSVEntry::Int(int_value)
+    } else if let Ok(float_value) = entry.parse::<f32>() {
+        CSVEntry::Float(float_value)
+    } else {
+        CSVEntry::String(entry.to_string())
+    }
 }
-// fn parse_entry(entry: &str) -> CSVEntry {
-//     if let Ok(int_value) = entry.parse::<i32>() {
-//         CSVEntry::Int(int_value)
-//     } else if let Ok(float_value) = entry.parse::<f32>() {
-//         CSVEntry::Float(float_value)
-//     } else {
-//         CSVEntry::String(entry.to_string())
-//     }
-// }
